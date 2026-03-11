@@ -1,0 +1,26 @@
+package com.happix.kexport.processor
+
+import com.google.devtools.ksp.gradle.KspExtension
+import org.gradle.api.Plugin
+import org.gradle.api.Project
+
+class KexportPlugin : Plugin<Project> {
+    override fun apply(project: Project) {
+        project.plugins.apply("com.google.devtools.ksp")
+
+        val extension = project.extensions.create("kexport", KexportExtension::class.java)
+
+        project.dependencies.add("compileOnly", "com.happix.kexport:annotation:1.0.0")
+        project.dependencies.add("ksp", "com.happix.kexport:processor:1.0.0")
+
+        project.afterEvaluate {
+            val packageToScan = extension.packageToScan.get()
+            val outputPackage = extension.outputPackage.orNull ?: "$packageToScan.dsl"
+
+            project.extensions.configure(KspExtension::class.java) { ksp ->
+                ksp.arg("kexport.packageToScan", packageToScan)
+                ksp.arg("kexport.outputPackage", outputPackage)
+            }
+        }
+    }
+}
