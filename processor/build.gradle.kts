@@ -10,6 +10,13 @@ dependencies {
     implementation(project(":annotation"))
     implementation(libs.ksp.api)
     implementation(libs.ksp.gradle.plugin)
+
+    testImplementation(libs.kotest.runner.junit5)
+    testImplementation(libs.kotest.assertions.core)
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 gradlePlugin {
