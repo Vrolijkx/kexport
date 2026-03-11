@@ -1,4 +1,5 @@
 pluginManagement {
+    includeBuild(".")
     repositories {
         gradlePluginPortal()
         mavenCentral()
@@ -13,4 +14,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "kexport"
 
-include(":annotation", ":processor", ":sample")
+include(":annotation", ":processor")
+
+includeBuild("sample")

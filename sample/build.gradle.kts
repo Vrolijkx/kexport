@@ -1,18 +1,16 @@
 plugins {
-    alias(libs.plugins.kotlin.jvm)
-    alias(libs.plugins.ksp)
+    kotlin("jvm") version "2.3.10"
+    id("com.happix.kexport")
 }
 
 group = "com.happix.sample"
 version = "1.0.0"
 
 dependencies {
-    implementation(project(":annotation"))
-    implementation(libs.kotlin.stdlib)
-    ksp(project(":processor"))
+    implementation(kotlin("stdlib"))
 }
 
-// Optional: override the package for the generated Exports file.
-// ksp {
-//     arg("kexport.outputPackage", "com.happix.sample.exports")
-// }
+kexport {
+    packageToScan = "com.happix.sample"
+    // outputPackage = "com.happix.sample.exports"  // optional, defaults to packageToScan
+}
