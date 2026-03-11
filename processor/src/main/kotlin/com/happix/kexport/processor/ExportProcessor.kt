@@ -8,16 +8,15 @@ import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.validate
-import com.happix.kexport.annotation.Export
+import com.happix.kexport.Export
 
-private const val ANNOTATION_NAME = "com.happix.kexport.annotation.Export"
-private const val OUTPUT_PACKAGE = "com.happix.kexport.generated"
+private const val ANNOTATION_NAME = "com.happix.kexport.Export"
 private const val OUTPUT_FILE = "Exports"
 
 class ExportProcessor(
     private val codeGenerator: CodeGenerator,
     private val logger: KSPLogger,
-    private val options: Map<String, String>,
+    private val configuration: ExportConfiguration,
 ) : SymbolProcessor {
 
     // Tracks whether we have already written the output file in a previous round.
@@ -53,7 +52,7 @@ class ExportProcessor(
     ): List<ExportEntry> {
         val allClasses = validSymbols.filterIsInstance<KSClassDeclaration>()
 
-        val packageToScan = options["kexport.packageToScan"]
+        val packageToScan = configuration.packageToScan
         val classes = if (packageToScan != null) {
             allClasses.filter { decl ->
                 val pkg = decl.packageName.asString()
@@ -85,8 +84,7 @@ class ExportProcessor(
     private fun writeExportsFile(
         exports: List<ExportEntry>,
     ) {
-        val packageToScan = options["kexport.packageToScan"]
-        val outputPackage = options["kexport.outputPackage"] ?: packageToScan ?: OUTPUT_PACKAGE
+        val outputPackage = configuration.outputPackage
 
         val sourceFiles = exports.mapNotNull { it.classDeclaration.containingFile }.toTypedArray()
 

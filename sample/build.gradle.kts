@@ -12,5 +12,5 @@ dependencies {
 
 kexport {
     packageToScan = "com.happix.sample"
-    // outputPackage = "com.happix.sample.exports"  // optional, defaults to packageToScan
+    outputPackage = "com.happix.sample.dsl"
 }

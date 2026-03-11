@@ -9,6 +9,6 @@ class ExportProcessorProvider : SymbolProcessorProvider {
         ExportProcessor(
             codeGenerator = environment.codeGenerator,
             logger = environment.logger,
-            options = environment.options,
+            configuration = ExportConfiguration.from(environment.options),
         )
 }

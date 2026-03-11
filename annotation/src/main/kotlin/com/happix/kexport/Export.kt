@@ -1,4 +1,4 @@
-package com.happix.kexport.annotation
+package com.happix.kexport
 
 /**
  * Marks a class for export. The KSP processor will generate a file containing
