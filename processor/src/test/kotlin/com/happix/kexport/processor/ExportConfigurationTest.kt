@@ -1,13 +1,14 @@
 package com.happix.kexport.processor
 
 import io.kotest.assertions.throwables.shouldThrow
-import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.equals.shouldBeEqual
 import io.kotest.matchers.shouldBe
+import org.junit.jupiter.api.Test
 
-class ExportConfigurationTest : FunSpec({
+class ExportConfigurationTest {
 
-    test("both keys present") {
+    @Test
+    fun `both keys present`() {
         val config = ExportConfiguration.from(
             mapOf(
                 "kexport.packageToScan" to "com.example",
@@ -18,7 +19,8 @@ class ExportConfigurationTest : FunSpec({
         config.outputPackage shouldBe "com.example.exports"
     }
 
-    test("only packageToScan - outputPackage defaults to packageToScan") {
+    @Test
+    fun `only packageToScan - outputPackage defaults to packageToScan`() {
         val config = ExportConfiguration.from(
             mapOf("kexport.packageToScan" to "com.example")
         )
@@ -26,7 +28,8 @@ class ExportConfigurationTest : FunSpec({
         config.outputPackage shouldBe "com.example.dsl"
     }
 
-    test("throw an IllegalArgumentException packageToScan is null") {
+    @Test
+    fun `throw an IllegalArgumentException packageToScan is null`() {
         shouldThrow<IllegalArgumentException> {
             ExportConfiguration.from(
                 mapOf("kexport.outputPackage" to "com.example.exports")
@@ -34,8 +37,8 @@ class ExportConfigurationTest : FunSpec({
         }.message shouldBe "Missing required option: kexport.packageToScan"
     }
 
-
-    test("unrelated keys are ignored") {
+    @Test
+    fun `unrelated keys are ignored`() {
         val config = ExportConfiguration.from(
             mapOf(
                 "kexport.packageToScan" to "com.example",
@@ -46,5 +49,4 @@ class ExportConfigurationTest : FunSpec({
 
         config shouldBeEqual ExportConfiguration("com.example", "com.example.exports")
     }
-})
-
+}

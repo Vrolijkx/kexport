@@ -11,8 +11,9 @@ dependencies {
     implementation(libs.ksp.api)
     implementation(libs.ksp.gradle.plugin)
 
-    testImplementation(libs.kotest.runner.junit5)
+    testImplementation(libs.junit.jupiter)
     testImplementation(libs.kotest.assertions.core)
+    testRuntimeOnly(libs.junit.platform.launcher)
 }
 
 tasks.test {
