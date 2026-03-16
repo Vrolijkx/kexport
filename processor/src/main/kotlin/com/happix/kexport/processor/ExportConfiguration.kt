@@ -3,8 +3,6 @@ package com.happix.kexport.processor
 private const val KEY_PACKAGE_TO_SCAN = "kexport.packageToScan"
 private const val KEY_OUTPUT_PACKAGE = "kexport.outputPackage"
 
-private const val DEFAULT_OUTPUT_PACKAGE = "com.happix.kexport.generated"
-
 /**
  * Parsed configuration for the Export KSP processor.
  */
