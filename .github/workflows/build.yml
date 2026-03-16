@@ -23,3 +23,9 @@ jobs:
 
       - name: Build
         run: ./gradlew build --no-daemon
+
+      - name: Publish test report
+        uses: mikepenz/action-junit-report@v5
+        if: always()
+        with:
+          report_paths: "**/build/test-results/test/TEST-*.xml"
