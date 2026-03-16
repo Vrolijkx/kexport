@@ -14,7 +14,3 @@ kexport {
     packageToScan = "com.happix.sample"
     outputPackage = "com.happix.sample.dsl"
 }
-
-application {
-    mainClass.set("com.happix.sample.MainKt")
-}
