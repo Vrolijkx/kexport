@@ -1,5 +1,6 @@
 package com.happix.kexport.processor
 
+import com.tschuchort.compiletesting.DiagnosticSeverity
 import com.tschuchort.compiletesting.JvmCompilationResult
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
@@ -82,6 +83,7 @@ class ExportProcessorTest {
             ),
         )
         result.exitCode shouldBe KotlinCompilation.ExitCode.OK
+        result.diagnosticMessages
         generated shouldContain "inline fun farewell"
         generated shouldContain "com.example.sayGoodbye"
         generated shouldNotContain "inline fun sayGoodbye"
@@ -292,6 +294,95 @@ class ExportProcessorTest {
         generated shouldContain "inline fun log(tag: kotlin.String, vararg msgs: kotlin.String)"
         generated shouldContain "com.example.log(tag = tag, *msgs)"
     }
+
+    @Test
+    fun `interface annotated with Export generates typealias`() {
+        val (result, generated) = compile(
+            SourceFile.kotlin(
+                "Printable.kt",
+                """
+                package com.example
+                import com.happix.kexport.Export
+                @Export
+                interface Printable {
+                    fun print()
+                }
+                """.trimIndent(),
+            ),
+        )
+        result.exitCode shouldBe KotlinCompilation.ExitCode.OK
+        generated shouldContain "typealias Printable = com.example.Printable"
+    }
+
+    @Test
+    fun `sealed class with all subclasses annotated generates typealiases for each`() {
+        val (result, generated) = compile(
+            SourceFile.kotlin(
+                "Shape.kt",
+                """
+                package com.example
+                import com.happix.kexport.Export
+                @Export sealed class Shape
+                @Export class Circle(val radius: Double) : Shape()
+                @Export data class Rectangle(val width: Double, val height: Double) : Shape()
+                @Export object Unknown : Shape()
+                """.trimIndent(),
+            ),
+        )
+        result.exitCode shouldBe KotlinCompilation.ExitCode.OK
+        generated shouldContain "typealias Shape = com.example.Shape"
+        generated shouldContain "typealias Circle = com.example.Circle"
+        generated shouldContain "typealias Rectangle = com.example.Rectangle"
+        generated shouldContain "typealias Unknown = com.example.Unknown"
+    }
+
+    @Test
+    fun `sealed class with unannotated subclass fails generation`() {
+        val (result, _) = compile(
+            SourceFile.kotlin(
+                "Shape.kt",
+                """
+                package com.example
+                import com.happix.kexport.Export
+                @Export sealed class Shape
+                class Circle(val radius: Double) : Shape()
+                """.trimIndent(),
+            ),
+        )
+        result.exitCode shouldBe KotlinCompilation.ExitCode.COMPILATION_ERROR
+        result.getErrorMessageContaining("Circle") shouldContain "@Export"
+    }
+
+    @Test
+    fun `sealed class subclass aliases can be used to construct instances`() {
+        val (result, _) = compile(
+            SourceFile.kotlin(
+                "Shape.kt",
+                """
+                package com.example
+                import com.happix.kexport.Export
+                @Export sealed class Shape
+                @Export class Circle(val radius: Double) : Shape()
+                @Export object Unknown : Shape()
+                """.trimIndent(),
+            ),
+            SourceFile.kotlin(
+                "Usage.kt",
+                """
+                package com.example.test
+                import com.example.dsl.Circle
+                import com.example.dsl.Unknown
+                val circle = Circle(radius = 1.0)
+                val unknown = Unknown
+                """.trimIndent(),
+            ),
+        )
+        result.exitCode shouldBe KotlinCompilation.ExitCode.OK
+    }
+
+    private fun JvmCompilationResult.getErrorMessageContaining(text: String): String = diagnosticMessages
+        .filter { it.severity == DiagnosticSeverity.ERROR && it.message.contains(text) }
+        .joinToString("\n") { it.message }
 
     private fun compile(
         vararg sources: SourceFile,
