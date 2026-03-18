@@ -218,6 +218,32 @@ class ExportProcessorTest {
     }
 
     @Test
+    fun `wrapper can be called with named parameters`() {
+        val (result, _) = compile(
+            SourceFile.kotlin(
+                "Funcs.kt",
+                """
+                package com.example
+                import com.happix.kexport.Export
+                @Export
+                fun send(to: String, subject: String, body: String) {}
+                """.trimIndent(),
+            ),
+            SourceFile.kotlin(
+                "Usage.kt",
+                """
+                package com.example.test
+                import com.example.dsl.send
+                fun test() {
+                    send(to = "alice@example.com", subject = "Hello", body = "World")
+                }
+                """.trimIndent(),
+            ),
+        )
+        result.exitCode shouldBe KotlinCompilation.ExitCode.OK
+    }
+
+    @Test
     fun `function with vararg and positional parameter generates correct wrapper`() {
         val (result, generated) = compile(
             SourceFile.kotlin(
