@@ -1,6 +1,7 @@
 package com.happix.kexport.processor
 
 import com.google.devtools.ksp.gradle.KspExtension
+import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
@@ -14,6 +15,9 @@ class KexportPlugin : Plugin<Project> {
         project.dependencies.add("ksp", "com.happix.kexport:processor:1.0.0")
 
         project.afterEvaluate {
+            if (!extension.packageToScan.isPresent) {
+                throw GradleException("Missing required option: kexport.packageToScan")
+            }
             val packageToScan = extension.packageToScan.get()
             val outputPackage = extension.outputPackage.orNull ?: "$packageToScan.dsl"
 
