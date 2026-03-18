@@ -217,6 +217,24 @@ class ExportProcessorTest {
         generated shouldContain "inline fun baz"
     }
 
+    @Test
+    fun `function with vararg and positional parameter generates correct wrapper`() {
+        val (result, generated) = compile(
+            SourceFile.kotlin(
+                "Funcs.kt",
+                """
+                package com.example
+                import com.happix.kexport.Export
+                @Export
+                fun log(tag: String, vararg msgs: String) {}
+                """.trimIndent(),
+            ),
+        )
+        result.exitCode shouldBe KotlinCompilation.ExitCode.OK
+        generated shouldContain "inline fun log(tag: kotlin.String, vararg msgs: kotlin.String)"
+        generated shouldContain "com.example.log(tag, *msgs)"
+    }
+
     private fun compile(
         vararg sources: SourceFile,
         packageToScan: String = "com.example",
