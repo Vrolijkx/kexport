@@ -380,10 +380,9 @@ class ExportProcessorTest {
         result.exitCode shouldBe KotlinCompilation.ExitCode.OK
     }
 
-    private fun JvmCompilationResult.getErrorMessageContaining(text: String): String =
-        diagnosticMessages
-            .filter { it.severity == DiagnosticSeverity.ERROR && it.message.contains(text) }
-            .joinToString("\n") { it.message }
+    private fun JvmCompilationResult.getErrorMessageContaining(text: String): String = diagnosticMessages
+        .filter { it.severity == DiagnosticSeverity.ERROR && it.message.contains(text) }
+        .joinToString("\n") { it.message }
 
     private fun compile(
         vararg sources: SourceFile,
