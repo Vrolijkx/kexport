@@ -226,23 +226,23 @@ class ExportProcessorTest {
                 package com.example
                 import com.happix.kexport.Export
                 @Export
-                fun send(to: String, subject: String = "No subject", body: String = "") {}
-                """.trimIndent(),
-            ),
-            SourceFile.kotlin(
-                "Usage.kt",
-                """
-                package com.example.test
-                import com.example.dsl.send
-                fun test() {
-                    send(to = "alice@example.com", subject = "Hello", body = "World")
-                    send(to = "alice@example.com", subject = "Hello")
-                    send(to = "alice@example.com")
-                }
+                fun send(to: String, subject: String = "No subject", body: String = ""): String =
+                    "${'$'}to|${'$'}subject|${'$'}body"
                 """.trimIndent(),
             ),
         )
         result.exitCode shouldBe KotlinCompilation.ExitCode.OK
+
+        val exportsClass = result.classLoader.loadClass("com.example.dsl.ExportsKt")
+
+        val fullOverload = exportsClass.getMethod("send", String::class.java, String::class.java, String::class.java)
+        fullOverload.invoke(null, "alice", "Hello", "World") shouldBe "alice|Hello|World"
+
+        val twoParamOverload = exportsClass.getMethod("send", String::class.java, String::class.java)
+        twoParamOverload.invoke(null, "alice", "Hello") shouldBe "alice|Hello|"
+
+        val oneParamOverload = exportsClass.getMethod("send", String::class.java)
+        oneParamOverload.invoke(null, "alice") shouldBe "alice|No subject|"
     }
 
     @Test
