@@ -230,19 +230,23 @@ class ExportProcessorTest {
                     "${'$'}to|${'$'}subject|${'$'}body"
                 """.trimIndent(),
             ),
+            SourceFile.kotlin(
+                "Results.kt",
+                """
+                package com.example.test
+                import com.example.dsl.send
+                val allParams = send(to = "alice", subject = "Hello", body = "World")
+                val subjectOnly = send(to = "alice", subject = "Hello")
+                val toOnly = send(to = "alice")
+                """.trimIndent(),
+            ),
         )
         result.exitCode shouldBe KotlinCompilation.ExitCode.OK
 
-        val exportsClass = result.classLoader.loadClass("com.example.dsl.ExportsKt")
-
-        val fullOverload = exportsClass.getMethod("send", String::class.java, String::class.java, String::class.java)
-        fullOverload.invoke(null, "alice", "Hello", "World") shouldBe "alice|Hello|World"
-
-        val twoParamOverload = exportsClass.getMethod("send", String::class.java, String::class.java)
-        twoParamOverload.invoke(null, "alice", "Hello") shouldBe "alice|Hello|"
-
-        val oneParamOverload = exportsClass.getMethod("send", String::class.java)
-        oneParamOverload.invoke(null, "alice") shouldBe "alice|No subject|"
+        val resultsClass = result.classLoader.loadClass("com.example.test.ResultsKt")
+        resultsClass.getMethod("getAllParams").invoke(null) shouldBe "alice|Hello|World"
+        resultsClass.getMethod("getSubjectOnly").invoke(null) shouldBe "alice|Hello|"
+        resultsClass.getMethod("getToOnly").invoke(null) shouldBe "alice|No subject|"
     }
 
     @Test
