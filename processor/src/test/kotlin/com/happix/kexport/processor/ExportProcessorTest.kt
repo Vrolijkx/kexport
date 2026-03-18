@@ -218,6 +218,64 @@ class ExportProcessorTest {
     }
 
     @Test
+    fun `delegate method can be called omitting parameters with default arguments`() {
+        val (result, _) = compile(
+            SourceFile.kotlin(
+                "Funcs.kt",
+                """
+                package com.example
+                import com.happix.kexport.Export
+                @Export
+                fun send(to: String, subject: String = "No subject", body: String = ""): String =
+                    "${'$'}to|${'$'}subject|${'$'}body"
+                """.trimIndent(),
+            ),
+            SourceFile.kotlin(
+                "Results.kt",
+                """
+                package com.example.test
+                import com.example.dsl.send
+                val allParams = send(to = "alice", subject = "Hello", body = "World")
+                val subjectOnly = send(to = "alice", subject = "Hello")
+                val toOnly = send(to = "alice")
+                """.trimIndent(),
+            ),
+        )
+        result.exitCode shouldBe KotlinCompilation.ExitCode.OK
+
+        val resultsClass = result.classLoader.loadClass("com.example.test.ResultsKt")
+        resultsClass.getMethod("getAllParams").invoke(null) shouldBe "alice|Hello|World"
+        resultsClass.getMethod("getSubjectOnly").invoke(null) shouldBe "alice|Hello|"
+        resultsClass.getMethod("getToOnly").invoke(null) shouldBe "alice|No subject|"
+    }
+
+    @Test
+    fun `wrapper can be called with named parameters`() {
+        val (result, _) = compile(
+            SourceFile.kotlin(
+                "Funcs.kt",
+                """
+                package com.example
+                import com.happix.kexport.Export
+                @Export
+                fun send(to: String, subject: String, body: String) {}
+                """.trimIndent(),
+            ),
+            SourceFile.kotlin(
+                "Usage.kt",
+                """
+                package com.example.test
+                import com.example.dsl.send
+                fun test() {
+                    send(to = "alice@example.com", subject = "Hello", body = "World")
+                }
+                """.trimIndent(),
+            ),
+        )
+        result.exitCode shouldBe KotlinCompilation.ExitCode.OK
+    }
+
+    @Test
     fun `function with vararg and positional parameter generates correct wrapper`() {
         val (result, generated) = compile(
             SourceFile.kotlin(
@@ -232,7 +290,7 @@ class ExportProcessorTest {
         )
         result.exitCode shouldBe KotlinCompilation.ExitCode.OK
         generated shouldContain "inline fun log(tag: kotlin.String, vararg msgs: kotlin.String)"
-        generated shouldContain "com.example.log(tag, *msgs)"
+        generated shouldContain "com.example.log(tag = tag, *msgs)"
     }
 
     private fun compile(
