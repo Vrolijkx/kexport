@@ -147,10 +147,14 @@ class ExportProcessor(
 
         val params = func.parameters
         val paramDeclarations = params.joinToString(", ") { param ->
-            "${param.name?.asString() ?: "_"}: ${param.type.resolve().declaration.qualifiedName?.asString() ?: "Any"}"
+            val prefix = if (param.isVararg) "vararg " else ""
+            val name = param.name?.asString() ?: "_"
+            val typeName = param.type.resolve().declaration.qualifiedName?.asString() ?: "Any"
+            "$prefix$name: $typeName"
         }
         val paramPassThrough = params.joinToString(", ") { param ->
-            param.name?.asString() ?: "_"
+            val spread = if (param.isVararg) "*" else ""
+            "$spread${param.name?.asString() ?: "_"}"
         }
 
         val returnTypeStr = if (isUnit) "" else ": $returnTypeName"
