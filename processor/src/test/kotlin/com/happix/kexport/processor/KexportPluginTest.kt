@@ -6,12 +6,10 @@ import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.nio.file.Files
 
-@Disabled("Requires Gradle TestKit and a more complex setup to properly test the plugin. This is a placeholder for future tests.")
 class KexportPluginTest {
 
     private lateinit var projectDir: File
@@ -60,7 +58,7 @@ class KexportPluginTest {
     fun `plugin applies without errors`() {
         buildFile.writeText("""
             plugins {
-                kotlin("jvm") version "2.3.10"
+                kotlin("jvm")
                 id("com.happix.kexport")
             }
 
@@ -77,7 +75,7 @@ class KexportPluginTest {
     fun `plugin configures default outputPackage`() {
         buildFile.writeText("""
             plugins {
-                kotlin("jvm") version "2.3.10"
+                kotlin("jvm")
                 id("com.happix.kexport")
             }
 
@@ -87,7 +85,7 @@ class KexportPluginTest {
 
             tasks.register("printKspArgs") {
                 doLast {
-                    val ksp = extensions.findByType(com.google.devtools.ksp.gradle.KspExtension::class.java)
+                    val ksp = project.extensions.findByType(com.google.devtools.ksp.gradle.KspExtension::class.java)
                     println("KSP_ARGS: " + ksp?.arguments)
                 }
             }
@@ -101,7 +99,7 @@ class KexportPluginTest {
     fun `plugin passes custom outputPackage`() {
         buildFile.writeText("""
             plugins {
-                kotlin("jvm") version "2.3.10"
+                kotlin("jvm")
                 id("com.happix.kexport")
             }
 
@@ -112,7 +110,7 @@ class KexportPluginTest {
 
             tasks.register("printKspArgs") {
                 doLast {
-                    val ksp = extensions.findByType(com.google.devtools.ksp.gradle.KspExtension::class.java)
+                    val ksp = project.extensions.findByType(com.google.devtools.ksp.gradle.KspExtension::class.java)
                     println("KSP_ARGS: " + ksp?.arguments)
                 }
             }
@@ -126,16 +124,14 @@ class KexportPluginTest {
     fun `missing packageToScan fails build`() {
         buildFile.writeText("""
             plugins {
-                kotlin("jvm") version "2.3.10"
+                kotlin("jvm")
                 id("com.happix.kexport")
             }
 
             // Intentionally NOT setting kexport { packageToScan = ... }
         """.trimIndent())
 
-        val result = runBuildAndFail("build")
-        // The build should fail because packageToScan is a required property
-        println(result.output)
-        result.output shouldContain("Missing required option: kexport.packageToScan")
+        val result = runBuildAndFail("tasks")
+        result.output shouldContain "Missing required option: kexport.packageToScan"
     }
 }
