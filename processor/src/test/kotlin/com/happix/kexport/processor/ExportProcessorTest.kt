@@ -350,11 +350,7 @@ class ExportProcessorTest {
             ),
         )
         result.exitCode shouldBe KotlinCompilation.ExitCode.COMPILATION_ERROR
-        val errors = result.diagnosticMessages
-            .filter { it.severity == DiagnosticSeverity.ERROR }
-            .joinToString("\n") { it.message }
-        errors shouldContain "Circle"
-        errors shouldContain "@Export"
+        result.getErrorMessageContaining("Circle") shouldContain "@Export"
     }
 
     @Test
@@ -383,6 +379,11 @@ class ExportProcessorTest {
         )
         result.exitCode shouldBe KotlinCompilation.ExitCode.OK
     }
+
+    private fun JvmCompilationResult.getErrorMessageContaining(text: String): String =
+        diagnosticMessages
+            .filter { it.severity == DiagnosticSeverity.ERROR && it.message.contains(text) }
+            .joinToString("\n") { it.message }
 
     private fun compile(
         vararg sources: SourceFile,
