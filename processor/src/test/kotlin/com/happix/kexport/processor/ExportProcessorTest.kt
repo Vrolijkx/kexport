@@ -218,8 +218,8 @@ class ExportProcessorTest {
     }
 
     @Test
-    fun `function with default parameters generates overloads`() {
-        val (result, generated) = compile(
+    fun `delegate method can be called omitting parameters with default arguments`() {
+        val (result, _) = compile(
             SourceFile.kotlin(
                 "Funcs.kt",
                 """
@@ -229,17 +229,20 @@ class ExportProcessorTest {
                 fun send(to: String, subject: String = "No subject", body: String = "") {}
                 """.trimIndent(),
             ),
+            SourceFile.kotlin(
+                "Usage.kt",
+                """
+                package com.example.test
+                import com.example.dsl.send
+                fun test() {
+                    send(to = "alice@example.com", subject = "Hello", body = "World")
+                    send(to = "alice@example.com", subject = "Hello")
+                    send(to = "alice@example.com")
+                }
+                """.trimIndent(),
+            ),
         )
         result.exitCode shouldBe KotlinCompilation.ExitCode.OK
-        // Full overload
-        generated shouldContain "inline fun send(to: kotlin.String, subject: kotlin.String, body: kotlin.String)"
-        generated shouldContain "com.example.send(to = to, subject = subject, body = body)"
-        // Two-param overload (body omitted)
-        generated shouldContain "inline fun send(to: kotlin.String, subject: kotlin.String)"
-        generated shouldContain "com.example.send(to = to, subject = subject)"
-        // One-param overload (subject + body omitted)
-        generated shouldContain "inline fun send(to: kotlin.String)"
-        generated shouldContain "com.example.send(to = to)"
     }
 
     @Test
