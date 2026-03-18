@@ -13,17 +13,20 @@ import org.junit.jupiter.api.Test
 
 @OptIn(ExperimentalCompilerApi::class)
 class ExportProcessorTest {
-    typealias GeneratedCode = String;
+    typealias GeneratedCode = String
 
     @Test
     fun `class annotated with Export generates typealias`() {
         val (result, generated) = compile(
-            SourceFile.kotlin("User.kt", """
+            SourceFile.kotlin(
+                "User.kt",
+                """
                 package com.example
                 import com.happix.kexport.Export
                 @Export
                 class User(val name: String)
-            """.trimIndent())
+                """.trimIndent(),
+            ),
         )
         result.exitCode shouldBe KotlinCompilation.ExitCode.OK
         generated shouldContain "typealias User = com.example.User"
@@ -32,12 +35,15 @@ class ExportProcessorTest {
     @Test
     fun `class with custom alias uses alias name`() {
         val (result, generated) = compile(
-            SourceFile.kotlin("User.kt", """
+            SourceFile.kotlin(
+                "User.kt",
+                """
                 package com.example
                 import com.happix.kexport.Export
                 @Export(alias = "UserModel")
                 class User(val name: String)
-            """.trimIndent())
+                """.trimIndent(),
+            ),
         )
         result.exitCode shouldBe KotlinCompilation.ExitCode.OK
         generated shouldContain "typealias UserModel = com.example.User"
@@ -47,12 +53,15 @@ class ExportProcessorTest {
     @Test
     fun `function annotated with Export generates inline wrapper`() {
         val (result, generated) = compile(
-            SourceFile.kotlin("Funcs.kt", """
+            SourceFile.kotlin(
+                "Funcs.kt",
+                """
                 package com.example
                 import com.happix.kexport.Export
                 @Export
                 fun greet(name: String): String = name
-            """.trimIndent())
+                """.trimIndent(),
+            ),
         )
         result.exitCode shouldBe KotlinCompilation.ExitCode.OK
         generated shouldContain "inline fun greet"
@@ -62,12 +71,15 @@ class ExportProcessorTest {
     @Test
     fun `function with custom alias uses alias name`() {
         val (result, generated) = compile(
-            SourceFile.kotlin("Funcs.kt", """
+            SourceFile.kotlin(
+                "Funcs.kt",
+                """
                 package com.example
                 import com.happix.kexport.Export
                 @Export(alias = "farewell")
                 fun sayGoodbye(name: String): String = name
-            """.trimIndent())
+                """.trimIndent(),
+            ),
         )
         result.exitCode shouldBe KotlinCompilation.ExitCode.OK
         generated shouldContain "inline fun farewell"
@@ -78,12 +90,15 @@ class ExportProcessorTest {
     @Test
     fun `function with Unit return type omits return type in wrapper`() {
         val (result, generated) = compile(
-            SourceFile.kotlin("Funcs.kt", """
+            SourceFile.kotlin(
+                "Funcs.kt",
+                """
                 package com.example
                 import com.happix.kexport.Export
                 @Export
                 fun log(msg: String) {}
-            """.trimIndent())
+                """.trimIndent(),
+            ),
         )
         result.exitCode shouldBe KotlinCompilation.ExitCode.OK
         generated shouldContain "inline fun log"
@@ -94,12 +109,15 @@ class ExportProcessorTest {
     @Test
     fun `classes outside packageToScan are excluded`() {
         val (result, generated) = compile(
-            SourceFile.kotlin("Other.kt", """
+            SourceFile.kotlin(
+                "Other.kt",
+                """
                 package com.other
                 import com.happix.kexport.Export
                 @Export
                 class OtherClass
-            """.trimIndent()),
+                """.trimIndent(),
+            ),
             packageToScan = "com.example",
         )
         result.exitCode shouldBe KotlinCompilation.ExitCode.OK
@@ -109,12 +127,15 @@ class ExportProcessorTest {
     @Test
     fun `classes in sub-packages are included`() {
         val (result, generated) = compile(
-            SourceFile.kotlin("Inner.kt", """
+            SourceFile.kotlin(
+                "Inner.kt",
+                """
                 package com.example.models
                 import com.happix.kexport.Export
                 @Export
                 class Inner
-            """.trimIndent()),
+                """.trimIndent(),
+            ),
             packageToScan = "com.example",
         )
         result.exitCode shouldBe KotlinCompilation.ExitCode.OK
@@ -124,13 +145,16 @@ class ExportProcessorTest {
     @Test
     fun `exports are sorted alphabetically by simple name`() {
         val (result, generated) = compile(
-            SourceFile.kotlin("Models.kt", """
+            SourceFile.kotlin(
+                "Models.kt",
+                """
                 package com.example
                 import com.happix.kexport.Export
                 @Export class Zebra
                 @Export class Apple
                 @Export class Mango
-            """.trimIndent())
+                """.trimIndent(),
+            ),
         )
         result.exitCode shouldBe KotlinCompilation.ExitCode.OK
         val content = generated!!
@@ -144,10 +168,13 @@ class ExportProcessorTest {
     @Test
     fun `no annotated symbols produces no output file`() {
         val (result, generated) = compile(
-            SourceFile.kotlin("Plain.kt", """
+            SourceFile.kotlin(
+                "Plain.kt",
+                """
                 package com.example
                 class Plain
-            """.trimIndent())
+                """.trimIndent(),
+            ),
         )
         result.exitCode shouldBe KotlinCompilation.ExitCode.OK
         generated shouldBe null
@@ -156,11 +183,14 @@ class ExportProcessorTest {
     @Test
     fun `output file is written to the configured outputPackage`() {
         val (result, generated) = compile(
-            SourceFile.kotlin("User.kt", """
+            SourceFile.kotlin(
+                "User.kt",
+                """
                 package com.example
                 import com.happix.kexport.Export
                 @Export class User
-            """.trimIndent()),
+                """.trimIndent(),
+            ),
             outputPackage = "com.example.exports",
         )
         result.exitCode shouldBe KotlinCompilation.ExitCode.OK
@@ -170,13 +200,16 @@ class ExportProcessorTest {
     @Test
     fun `multiple classes and functions all appear in output`() {
         val (result, generated) = compile(
-            SourceFile.kotlin("Mixed.kt", """
+            SourceFile.kotlin(
+                "Mixed.kt",
+                """
                 package com.example
                 import com.happix.kexport.Export
                 @Export class Foo
                 @Export class Bar
                 @Export fun baz() {}
-            """.trimIndent())
+                """.trimIndent(),
+            ),
         )
         result.exitCode shouldBe KotlinCompilation.ExitCode.OK
         generated shouldContain "typealias Bar = com.example.Bar"
@@ -205,5 +238,4 @@ class ExportProcessorTest {
             ?.readText()
         return result to generated
     }
-
 }
