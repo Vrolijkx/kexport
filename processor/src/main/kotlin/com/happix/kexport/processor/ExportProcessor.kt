@@ -9,6 +9,7 @@ import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSDeclaration
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
+import com.google.devtools.ksp.symbol.Modifier
 import com.google.devtools.ksp.validate
 import com.happix.kexport.Export
 
@@ -64,6 +65,10 @@ class ExportProcessor(
             allDeclarations
         }
 
+        val exportedQualifiedNames = declarations
+            .mapNotNull { it.qualifiedName?.asString() }
+            .toSet()
+
         return declarations
             .sortedBy { it.simpleName.asString() }
             .mapNotNull { decl ->
@@ -73,11 +78,16 @@ class ExportProcessor(
                     return@mapNotNull null
                 }
                 when (decl) {
-                    is KSClassDeclaration -> ExportEntry.ClassEntry(
-                        declaration = decl,
-                        exportName = decl.determineExportName(),
-                        qualifiedName = qualifiedName,
-                    )
+                    is KSClassDeclaration -> {
+                        if (Modifier.SEALED in decl.modifiers) {
+                            validateSealedSubclassesAnnotated(decl, exportedQualifiedNames)
+                        }
+                        ExportEntry.ClassEntry(
+                            declaration = decl,
+                            exportName = decl.determineExportName(),
+                            qualifiedName = qualifiedName,
+                        )
+                    }
                     is KSFunctionDeclaration -> ExportEntry.FunctionEntry(
                         declaration = decl,
                         exportName = decl.determineExportName(),
@@ -89,6 +99,25 @@ class ExportProcessor(
                     }
                 }
             }
+    }
+
+    private fun validateSealedSubclassesAnnotated(
+        sealedClass: KSClassDeclaration,
+        exportedQualifiedNames: Set<String>,
+    ) {
+        sealedClass.getSealedSubclasses().forEach { subclass ->
+            val subQualifiedName = subclass.qualifiedName?.asString()
+            if (subQualifiedName == null || subQualifiedName !in exportedQualifiedNames) {
+                logger.error(
+                    "@Export on sealed class '${sealedClass.simpleName.asString()}' requires all subclasses " +
+                        "to be annotated with @Export, but '${subclass.simpleName.asString()}' is missing it.",
+                    subclass,
+                )
+            }
+            if (Modifier.SEALED in subclass.modifiers) {
+                validateSealedSubclassesAnnotated(subclass, exportedQualifiedNames)
+            }
+        }
     }
 
     /**
