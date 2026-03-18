@@ -34,6 +34,8 @@ class ExportProcessor(
 
         if (exports.isEmpty()) return deferred
 
+        validateNoDuplicateExportNames(exports)
+
         if (generated) {
             logger.warn("$OUTPUT_FILE already generated; skipping extra round.")
             return deferred
@@ -97,6 +99,22 @@ class ExportProcessor(
                         logger.warn("@Export is not supported on ${decl.simpleName.asString()}")
                         null
                     }
+                }
+            }
+    }
+
+    private fun validateNoDuplicateExportNames(exports: List<ExportEntry>) {
+        exports
+            .groupBy { it.exportName }
+            .filter { (_, entries) -> entries.size > 1 }
+            .forEach { (name, entries) ->
+                entries.forEach { entry ->
+                    logger.error(
+                        "duplicate export name '$name': '${entry.declaration.simpleName.asString()}' " +
+                            "and '${entries.first { it !== entry }.declaration.simpleName.asString()}' " +
+                            "both export under the same name.",
+                        entry.declaration,
+                    )
                 }
             }
     }

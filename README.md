@@ -58,6 +58,11 @@ inline fun greet(name: String): String = com.example.mymodule.models.greet(name)
 Consumers import from the output package and are completely decoupled from the internal structure:
 
 
+## Constraints
+
+- Every exported symbol must have a **unique export name** within the scanned packages — including across classes and functions. Two symbols that resolve to the same name (either by their own simple name or via `alias`) will cause a build error.
+- For **sealed classes**, every direct subclass must also be annotated with `@Export`. The build fails with a descriptive error if any subclass is missing the annotation.
+
 ## Configuration reference
 
 | Property        | Required | Default              | Description |
@@ -68,7 +73,7 @@ Consumers import from the output package and are completely decoupled from the i
 
 ## Future plans
 - [x] Support for varargs
-- [ ] Support for `Interfaces`
-- [ ] Support for `sealed` classes
+- [x] Support for `Interfaces`
+- [x] Support for `sealed` classes
 - [ ] Allow to use your own KSP processor version
 - [ ] Add support for using `kapt` instead of `ksp`
