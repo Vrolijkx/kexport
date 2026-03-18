@@ -337,6 +337,23 @@ class ExportProcessorTest {
     }
 
     @Test
+    fun `duplicate export name fails generation with clear message`() {
+        val (result, _) = compile(
+            SourceFile.kotlin(
+                "Models.kt",
+                """
+                package com.example
+                import com.happix.kexport.Export
+                @Export class User
+                @Export(alias = "User") class Account
+                """.trimIndent(),
+            ),
+        )
+        result.exitCode shouldBe KotlinCompilation.ExitCode.COMPILATION_ERROR
+        result.getErrorMessageContaining("User") shouldContain "duplicate"
+    }
+
+    @Test
     fun `sealed class with unannotated subclass fails generation`() {
         val (result, _) = compile(
             SourceFile.kotlin(
