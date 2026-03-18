@@ -7,7 +7,9 @@ import org.gradle.api.Project
 
 class KexportPlugin : Plugin<Project> {
     override fun apply(project: Project) {
-        project.plugins.apply("com.google.devtools.ksp")
+        if (!project.plugins.hasPlugin("com.google.devtools.ksp")) {
+            project.plugins.apply("com.google.devtools.ksp")
+        }
 
         val extension = project.extensions.create("kexport", KexportExtension::class.java)
 

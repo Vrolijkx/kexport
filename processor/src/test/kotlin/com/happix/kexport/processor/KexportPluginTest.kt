@@ -129,6 +129,26 @@ class KexportPluginTest {
     }
 
     @Test
+    fun `plugin works when KSP is already applied by the project`() {
+        buildFile.writeText(
+            """
+            plugins {
+                kotlin("jvm")
+                id("com.google.devtools.ksp")
+                id("com.happix.kexport")
+            }
+
+            kexport {
+                packageToScan = "com.example"
+            }
+            """.trimIndent(),
+        )
+
+        val result = runBuild("tasks")
+        result.task(":tasks")?.outcome shouldBe TaskOutcome.SUCCESS
+    }
+
+    @Test
     fun `missing packageToScan fails build`() {
         buildFile.writeText(
             """
