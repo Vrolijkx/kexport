@@ -1,5 +1,6 @@
 package com.happix.kexport.processor
 
+import com.tschuchort.compiletesting.DiagnosticSeverity
 import com.tschuchort.compiletesting.JvmCompilationResult
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
@@ -82,6 +83,7 @@ class ExportProcessorTest {
             ),
         )
         result.exitCode shouldBe KotlinCompilation.ExitCode.OK
+        result.diagnosticMessages
         generated shouldContain "inline fun farewell"
         generated shouldContain "com.example.sayGoodbye"
         generated shouldNotContain "inline fun sayGoodbye"
@@ -348,6 +350,11 @@ class ExportProcessorTest {
             ),
         )
         result.exitCode shouldBe KotlinCompilation.ExitCode.COMPILATION_ERROR
+        val errors = result.diagnosticMessages
+            .filter { it.severity == DiagnosticSeverity.ERROR }
+            .joinToString("\n") { it.message }
+        errors shouldContain "Circle"
+        errors shouldContain "@Export"
     }
 
     @Test
