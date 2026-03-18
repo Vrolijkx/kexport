@@ -218,6 +218,31 @@ class ExportProcessorTest {
     }
 
     @Test
+    fun `function with default parameters generates overloads`() {
+        val (result, generated) = compile(
+            SourceFile.kotlin(
+                "Funcs.kt",
+                """
+                package com.example
+                import com.happix.kexport.Export
+                @Export
+                fun send(to: String, subject: String = "No subject", body: String = "") {}
+                """.trimIndent(),
+            ),
+        )
+        result.exitCode shouldBe KotlinCompilation.ExitCode.OK
+        // Full overload
+        generated shouldContain "inline fun send(to: kotlin.String, subject: kotlin.String, body: kotlin.String)"
+        generated shouldContain "com.example.send(to = to, subject = subject, body = body)"
+        // Two-param overload (body omitted)
+        generated shouldContain "inline fun send(to: kotlin.String, subject: kotlin.String)"
+        generated shouldContain "com.example.send(to = to, subject = subject)"
+        // One-param overload (subject + body omitted)
+        generated shouldContain "inline fun send(to: kotlin.String)"
+        generated shouldContain "com.example.send(to = to)"
+    }
+
+    @Test
     fun `wrapper can be called with named parameters`() {
         val (result, _) = compile(
             SourceFile.kotlin(
@@ -258,7 +283,7 @@ class ExportProcessorTest {
         )
         result.exitCode shouldBe KotlinCompilation.ExitCode.OK
         generated shouldContain "inline fun log(tag: kotlin.String, vararg msgs: kotlin.String)"
-        generated shouldContain "com.example.log(tag, *msgs)"
+        generated shouldContain "com.example.log(tag = tag, *msgs)"
     }
 
     private fun compile(

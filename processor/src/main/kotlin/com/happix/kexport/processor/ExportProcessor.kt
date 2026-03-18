@@ -128,7 +128,9 @@ class ExportProcessor(
             if (functionEntries.isNotEmpty()) {
                 writer.appendLine()
                 for (entry in functionEntries) {
-                    writer.appendLine(generateFunctionWrapper(entry))
+                    for (overload in generateFunctionWrappers(entry)) {
+                        writer.appendLine(overload)
+                    }
                 }
             }
         }
@@ -137,31 +139,35 @@ class ExportProcessor(
     }
 
     /**
-     * Generates a delegating wrapper function for an exported function.
+     * Generates delegating wrapper functions for an exported function.
+     * Returns one overload per trailing-optional-param count (from full signature down to required-only).
      */
-    private fun generateFunctionWrapper(entry: ExportEntry.FunctionEntry): String {
+    private fun generateFunctionWrappers(entry: ExportEntry.FunctionEntry): List<String> {
         val func = entry.declaration
         val returnType = func.returnType?.resolve()
         val returnTypeName = returnType?.declaration?.qualifiedName?.asString() ?: "Unit"
         val isUnit = returnTypeName == "Unit" || returnTypeName == "kotlin.Unit"
-
-        val params = func.parameters
-        val paramDeclarations = params.joinToString(", ") { param ->
-            val prefix = if (param.isVararg) "vararg " else ""
-            val name = param.name?.asString() ?: "_"
-            val typeName = param.type.resolve().declaration.qualifiedName?.asString() ?: "Any"
-            "$prefix$name: $typeName"
-        }
-        val paramPassThrough = params.joinToString(", ") { param ->
-            val spread = if (param.isVararg) "*" else ""
-            "$spread${param.name?.asString() ?: "_"}"
-        }
-
         val returnTypeStr = if (isUnit) "" else ": $returnTypeName"
 
-        return buildString {
-            append("inline fun ${entry.exportName}($paramDeclarations)$returnTypeStr")
-            append(" = ${entry.qualifiedName}($paramPassThrough)")
+        val params = func.parameters
+        val trailingOptionalCount = params.reversed().takeWhile { it.hasDefault && !it.isVararg }.count()
+
+        return (0..trailingOptionalCount).map { omit ->
+            val activeParams = params.dropLast(omit)
+            val paramDeclarations = activeParams.joinToString(", ") { param ->
+                val prefix = if (param.isVararg) "vararg " else ""
+                val name = param.name?.asString() ?: "_"
+                val typeName = param.type.resolve().declaration.qualifiedName?.asString() ?: "Any"
+                "$prefix$name: $typeName"
+            }
+            val paramPassThrough = activeParams.joinToString(", ") { param ->
+                val name = param.name?.asString() ?: "_"
+                if (param.isVararg) "*$name" else "$name = $name"
+            }
+            buildString {
+                append("inline fun ${entry.exportName}($paramDeclarations)$returnTypeStr")
+                append(" = ${entry.qualifiedName}($paramPassThrough)")
+            }
         }
     }
 
