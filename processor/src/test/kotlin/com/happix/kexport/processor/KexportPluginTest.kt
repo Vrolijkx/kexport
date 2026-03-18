@@ -21,7 +21,8 @@ class KexportPluginTest {
         projectDir = Files.createTempDirectory("kexport-test").toFile()
         buildFile = projectDir.resolve("build.gradle.kts")
         settingsFile = projectDir.resolve("settings.gradle.kts")
-        settingsFile.writeText("""
+        settingsFile.writeText(
+            """
             pluginManagement {
                 repositories {
                     gradlePluginPortal()
@@ -34,7 +35,8 @@ class KexportPluginTest {
                 }
             }
             rootProject.name = "test-project"
-        """.trimIndent())
+            """.trimIndent(),
+        )
     }
 
     @AfterEach
@@ -56,7 +58,8 @@ class KexportPluginTest {
 
     @Test
     fun `plugin applies without errors`() {
-        buildFile.writeText("""
+        buildFile.writeText(
+            """
             plugins {
                 kotlin("jvm")
                 id("com.happix.kexport")
@@ -65,7 +68,8 @@ class KexportPluginTest {
             kexport {
                 packageToScan = "com.example"
             }
-        """.trimIndent())
+            """.trimIndent(),
+        )
 
         val result = runBuild("tasks")
         result.task(":tasks")?.outcome shouldBe TaskOutcome.SUCCESS
@@ -73,7 +77,8 @@ class KexportPluginTest {
 
     @Test
     fun `plugin configures default outputPackage`() {
-        buildFile.writeText("""
+        buildFile.writeText(
+            """
             plugins {
                 kotlin("jvm")
                 id("com.happix.kexport")
@@ -89,7 +94,8 @@ class KexportPluginTest {
                     println("KSP_ARGS: " + ksp?.arguments)
                 }
             }
-        """.trimIndent())
+            """.trimIndent(),
+        )
 
         val result = runBuild("printKspArgs")
         result.output shouldContain "kexport.outputPackage=com.example.dsl"
@@ -97,7 +103,8 @@ class KexportPluginTest {
 
     @Test
     fun `plugin passes custom outputPackage`() {
-        buildFile.writeText("""
+        buildFile.writeText(
+            """
             plugins {
                 kotlin("jvm")
                 id("com.happix.kexport")
@@ -114,7 +121,8 @@ class KexportPluginTest {
                     println("KSP_ARGS: " + ksp?.arguments)
                 }
             }
-        """.trimIndent())
+            """.trimIndent(),
+        )
 
         val result = runBuild("printKspArgs")
         result.output shouldContain "kexport.outputPackage=com.example.custom"
@@ -122,14 +130,16 @@ class KexportPluginTest {
 
     @Test
     fun `missing packageToScan fails build`() {
-        buildFile.writeText("""
+        buildFile.writeText(
+            """
             plugins {
                 kotlin("jvm")
                 id("com.happix.kexport")
             }
 
             // Intentionally NOT setting kexport { packageToScan = ... }
-        """.trimIndent())
+            """.trimIndent(),
+        )
 
         val result = runBuildAndFail("tasks")
         result.output shouldContain "Missing required option: kexport.packageToScan"

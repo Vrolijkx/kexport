@@ -13,7 +13,7 @@ class ExportConfigurationTest {
             mapOf(
                 "kexport.packageToScan" to "com.example",
                 "kexport.outputPackage" to "com.example.exports",
-            )
+            ),
         )
         config.packageToScan shouldBe "com.example"
         config.outputPackage shouldBe "com.example.exports"
@@ -22,7 +22,7 @@ class ExportConfigurationTest {
     @Test
     fun `only packageToScan - outputPackage defaults to packageToScan`() {
         val config = ExportConfiguration.from(
-            mapOf("kexport.packageToScan" to "com.example")
+            mapOf("kexport.packageToScan" to "com.example"),
         )
         config.packageToScan shouldBe "com.example"
         config.outputPackage shouldBe "com.example.dsl"
@@ -32,7 +32,7 @@ class ExportConfigurationTest {
     fun `throw an IllegalArgumentException packageToScan is null`() {
         shouldThrow<IllegalArgumentException> {
             ExportConfiguration.from(
-                mapOf("kexport.outputPackage" to "com.example.exports")
+                mapOf("kexport.outputPackage" to "com.example.exports"),
             )
         }.message shouldBe "Missing required option: kexport.packageToScan"
     }
@@ -43,8 +43,8 @@ class ExportConfigurationTest {
             mapOf(
                 "kexport.packageToScan" to "com.example",
                 "kexport.outputPackage" to "com.example.exports",
-                "some.other.key" to "value"
-            )
+                "some.other.key" to "value",
+            ),
         )
 
         config shouldBeEqual ExportConfiguration("com.example", "com.example.exports")
