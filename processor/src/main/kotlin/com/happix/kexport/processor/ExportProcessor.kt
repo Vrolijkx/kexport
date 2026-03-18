@@ -161,14 +161,12 @@ class ExportProcessor(
         }
     }
 
-    private fun KSDeclaration.determineExportName(): String {
-        return this.annotations
-            .firstOrNull { it.shortName.asString() == Export::class.simpleName }
-            ?.arguments
-            ?.firstOrNull { it.name?.asString() == "alias" }
-            ?.value
-            ?.toString()
-            ?.takeIf { it.isNotBlank() }
-            ?: this.simpleName.asString()
-    }
+    private fun KSDeclaration.determineExportName(): String = this.annotations
+        .firstOrNull { it.shortName.asString() == Export::class.simpleName }
+        ?.arguments
+        ?.firstOrNull { it.name?.asString() == "alias" }
+        ?.value
+        ?.toString()
+        ?.takeIf { it.isNotBlank() }
+        ?: this.simpleName.asString()
 }
