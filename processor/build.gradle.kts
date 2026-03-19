@@ -35,6 +35,13 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+    val annotationJarTask = project(":annotation").tasks.named<Jar>("jar")
+    val processorJarTask = tasks.named<Jar>("jar")
+    dependsOn(annotationJarTask, processorJarTask)
+    doFirst {
+        systemProperty("kexport.annotationJar", annotationJarTask.get().archiveFile.get().asFile.absolutePath)
+        systemProperty("kexport.processorJar", processorJarTask.get().archiveFile.get().asFile.absolutePath)
+    }
 }
 
 tasks.named<PluginUnderTestMetadata>("pluginUnderTestMetadata") {

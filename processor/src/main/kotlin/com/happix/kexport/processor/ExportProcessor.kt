@@ -11,9 +11,9 @@ import com.google.devtools.ksp.symbol.KSDeclaration
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.Modifier
 import com.google.devtools.ksp.validate
-import com.happix.kexport.Export
 
 private const val ANNOTATION_NAME = "com.happix.kexport.Export"
+private const val ANNOTATION_SIMPLE_NAME = "Export"
 private const val OUTPUT_FILE = "Exports"
 
 class ExportProcessor(
@@ -219,7 +219,7 @@ class ExportProcessor(
     }
 
     private fun KSDeclaration.determineExportName(): String = this.annotations
-        .firstOrNull { it.shortName.asString() == Export::class.simpleName }
+        .firstOrNull { it.shortName.asString() == ANNOTATION_SIMPLE_NAME }
         ?.arguments
         ?.firstOrNull { it.name?.asString() == "alias" }
         ?.value
