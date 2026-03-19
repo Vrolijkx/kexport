@@ -26,6 +26,8 @@ dependencies {
 
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.kotest.assertions.core)
+    testImplementation(libs.kotest.property)
+    testImplementation(libs.kotlinx.coroutines.core)
     testImplementation(libs.kctfork.core)
     testImplementation(libs.kctfork.ksp)
     testRuntimeOnly(libs.junit.platform.launcher)
