@@ -75,5 +75,5 @@ Consumers import from the output package and are completely decoupled from the i
 - [x] Support for varargs
 - [x] Support for `Interfaces`
 - [x] Support for `sealed` classes
-- [ ] Allow to use your own KSP processor version
+- [x] Allow to use your own KSP processor version
 - [ ] Add support for using `kapt` instead of `ksp`
