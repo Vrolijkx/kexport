@@ -2,9 +2,9 @@ package com.happix.kexport.processor
 
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
-import io.kotest.property.Exhaustive
-import io.kotest.property.checkAll
-import io.kotest.property.exhaustive.collection
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
@@ -23,13 +23,22 @@ class KexportPluginKspCompatibilityTest {
 
     @Test
     fun `plugin applies correctly when project uses various KSP versions`() = runBlocking<Unit> {
-        Exhaustive.collection(supportedKspVersions).checkAll { version ->
-            val projectDir = Files.createTempDirectory("kexport-ksp-compat").toFile()
-            try {
-                testKspVersionInTempDir(projectDir, version)
-            } finally {
-                projectDir.deleteRecursively()
+        val failures = supportedKspVersions.map { version ->
+            async(Dispatchers.IO) {
+                val projectDir = Files.createTempDirectory("kexport-ksp-compat").toFile()
+                try {
+                    testKspVersionInTempDir(projectDir, version)
+                    null
+                } catch (e: Throwable) {
+                    "KSP ${version.ksp} / Kotlin ${version.kotlin}: ${e.message}"
+                } finally {
+                    projectDir.deleteRecursively()
+                }
             }
+        }.awaitAll().filterNotNull()
+
+        if (failures.isNotEmpty()) {
+            throw AssertionError("Compatibility failures:\n${failures.joinToString("\n")}")
         }
     }
 
