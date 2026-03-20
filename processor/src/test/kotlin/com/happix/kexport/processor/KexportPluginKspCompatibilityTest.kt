@@ -57,6 +57,7 @@ class KexportPluginKspCompatibilityTest {
             """
             package com.example
             import com.happix.kexport.Export
+
             @Export
             class User(val name: String)
             """.trimIndent(),
@@ -72,7 +73,7 @@ class KexportPluginKspCompatibilityTest {
 
         val generated = projectDir
             .walkTopDown()
-            .firstOrNull { it.name == "Exports.kt" }
+            .firstOrNull { it.name == "Dsl.kt" }
         generated?.readText() shouldContain "typealias User = com.example.User"
     }
 

@@ -1,7 +1,6 @@
 package com.happix.kexport.processor
 
 import com.google.devtools.ksp.gradle.KspExtension
-import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
@@ -17,16 +16,18 @@ class KexportPlugin : Plugin<Project> {
         project.dependencies.add("ksp", "com.happix.kexport:processor:1.0.0")
 
         project.afterEvaluate {
-            if (!extension.packageToScan.isPresent) {
-                throw GradleException("Missing required option: kexport.packageToScan")
-            }
-            val packageToScan = extension.packageToScan.get()
-            val outputPackage = extension.outputPackage.orNull ?: "$packageToScan.dsl"
+            val exportConfig = KexportConfiguration.fromGradleExtension(extension)
 
             project.extensions.configure(KspExtension::class.java) { ksp ->
-                ksp.arg("kexport.packageToScan", packageToScan)
-                ksp.arg("kexport.outputPackage", outputPackage)
+                // For ksp, we need to pass the configuration as string value arguments, we can't pass the full configuration object.
+                ksp.args(exportConfig.toKspArguments())
             }
+        }
+    }
+
+    private fun KspExtension.args(args: Map<String, String>) {
+        args.map { (key, value) ->
+            this.arg(key, value)
         }
     }
 }

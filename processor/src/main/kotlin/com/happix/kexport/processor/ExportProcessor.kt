@@ -1,25 +1,17 @@
 package com.happix.kexport.processor
 
-import com.google.devtools.ksp.processing.CodeGenerator
-import com.google.devtools.ksp.processing.Dependencies
-import com.google.devtools.ksp.processing.KSPLogger
-import com.google.devtools.ksp.processing.Resolver
-import com.google.devtools.ksp.processing.SymbolProcessor
-import com.google.devtools.ksp.symbol.KSAnnotated
-import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.google.devtools.ksp.symbol.KSDeclaration
-import com.google.devtools.ksp.symbol.KSFunctionDeclaration
-import com.google.devtools.ksp.symbol.Modifier
+import com.google.devtools.ksp.processing.*
+import com.google.devtools.ksp.symbol.*
 import com.google.devtools.ksp.validate
+import java.io.OutputStream
 
 private const val ANNOTATION_NAME = "com.happix.kexport.Export"
 private const val ANNOTATION_SIMPLE_NAME = "Export"
-private const val OUTPUT_FILE = "Exports"
 
 class ExportProcessor(
     private val codeGenerator: CodeGenerator,
     private val logger: KSPLogger,
-    private val configuration: ExportConfiguration,
+    private val configuration: KexportConfiguration,
 ) : SymbolProcessor {
 
     // Tracks whether we have already written the output file in a previous round.
@@ -37,7 +29,7 @@ class ExportProcessor(
         validateNoDuplicateExportNames(exports)
 
         if (generated) {
-            logger.warn("$OUTPUT_FILE already generated; skipping extra round.")
+            logger.warn("${configuration.outputFileName} already generated; skipping extra round.")
             return deferred
         }
 
@@ -58,49 +50,49 @@ class ExportProcessor(
         val allDeclarations = validSymbols.filterIsInstance<KSDeclaration>()
 
         val packageToScan = configuration.packageToScan
-        val declarations = if (packageToScan != null) {
-            allDeclarations.filter { decl ->
-                val pkg = decl.packageName.asString()
-                pkg == packageToScan || pkg.startsWith("$packageToScan.")
-            }
-        } else {
-            allDeclarations
+        val declarationsPartOfScanPackage = allDeclarations.filter { decl ->
+            val pkg = decl.packageName.asString()
+            pkg == packageToScan || pkg.startsWith("$packageToScan.")
         }
 
-        val exportedQualifiedNames = declarations
-            .mapNotNull { it.qualifiedName?.asString() }
-            .toSet()
-
-        return declarations
+        return declarationsPartOfScanPackage
             .sortedBy { it.simpleName.asString() }
             .mapNotNull { decl ->
-                val qualifiedName = decl.qualifiedName?.asString()
-                if (qualifiedName == null) {
-                    logger.error("Cannot resolve qualified name for ${decl.simpleName.asString()}", decl)
-                    return@mapNotNull null
-                }
-                when (decl) {
-                    is KSClassDeclaration -> {
-                        if (Modifier.SEALED in decl.modifiers) {
-                            validateSealedSubclassesAnnotated(decl, exportedQualifiedNames)
-                        }
-                        ExportEntry.ClassEntry(
-                            declaration = decl,
-                            exportName = decl.determineExportName(),
-                            qualifiedName = qualifiedName,
-                        )
-                    }
-                    is KSFunctionDeclaration -> ExportEntry.FunctionEntry(
-                        declaration = decl,
-                        exportName = decl.determineExportName(),
-                        qualifiedName = qualifiedName,
-                    )
-                    else -> {
-                        logger.warn("@Export is not supported on ${decl.simpleName.asString()}")
-                        null
-                    }
-                }
+                return@mapNotNull exportEntryFor(decl)
             }
+    }
+
+    private fun exportEntryFor(
+        decl: KSDeclaration,
+    ): ExportEntry? {
+        val qualifiedName = decl.qualifiedName?.asString()
+        if (qualifiedName == null) {
+            logger.error("Cannot resolve qualified name for ${decl.simpleName.asString()}", decl)
+            return null
+        }
+        return when (decl) {
+            is KSClassDeclaration -> {
+                if (Modifier.SEALED in decl.modifiers) {
+                    validateSealedSubclassesAnnotated(decl)
+                }
+                ExportEntry.ClassEntry(
+                    declaration = decl,
+                    exportName = decl.determineExportName(),
+                    qualifiedName = qualifiedName,
+                )
+            }
+
+            is KSFunctionDeclaration -> ExportEntry.FunctionEntry(
+                declaration = decl,
+                exportName = decl.determineExportName(),
+                qualifiedName = qualifiedName,
+            )
+
+            else -> {
+                logger.warn("@Export is not supported on ${decl.simpleName.asString()}")
+                null
+            }
+        }
     }
 
     private fun validateNoDuplicateExportNames(exports: List<ExportEntry>) {
@@ -121,11 +113,9 @@ class ExportProcessor(
 
     private fun validateSealedSubclassesAnnotated(
         sealedClass: KSClassDeclaration,
-        exportedQualifiedNames: Set<String>,
     ) {
         sealedClass.getSealedSubclasses().forEach { subclass ->
-            val subQualifiedName = subclass.qualifiedName?.asString()
-            if (subQualifiedName == null || subQualifiedName !in exportedQualifiedNames) {
+            if (!subclass.hasExportAnnotation()) {
                 logger.error(
                     "@Export on sealed class '${sealedClass.simpleName.asString()}' requires all subclasses " +
                         "to be annotated with @Export, but '${subclass.simpleName.asString()}' is missing it.",
@@ -133,7 +123,7 @@ class ExportProcessor(
                 )
             }
             if (Modifier.SEALED in subclass.modifiers) {
-                validateSealedSubclassesAnnotated(subclass, exportedQualifiedNames)
+                validateSealedSubclassesAnnotated(subclass)
             }
         }
     }
@@ -145,23 +135,28 @@ class ExportProcessor(
     private fun writeExportsFile(
         exports: List<ExportEntry>,
     ) {
-        val outputPackage = configuration.outputPackage
-
         val sourceFiles = exports.mapNotNull { it.declaration.containingFile }.toTypedArray()
 
-        val outputStream = codeGenerator.createNewFile(
+        val newCodeFileStream = codeGenerator.createNewFile(
             dependencies = Dependencies(aggregating = true, *sourceFiles),
-            packageName = outputPackage,
-            fileName = OUTPUT_FILE,
+            packageName = configuration.outputPackage,
+            fileName = configuration.outputFileName.removeSuffix(".kt"),
         )
 
+        newCodeFileStream.writeExportsFile(exports)
+        logger.info("Generated ${configuration.outputPackage}.${configuration.outputFileName} with ${exports.size} export(s).")
+    }
+
+    private fun OutputStream.writeExportsFile(
+        exports: List<ExportEntry>,
+    ) {
         val classEntries = exports.filterIsInstance<ExportEntry.ClassEntry>()
         val functionEntries = exports.filterIsInstance<ExportEntry.FunctionEntry>()
 
-        outputStream.bufferedWriter().use { writer ->
-            writer.appendLine("@file:Suppress(\"unused\")")
+        this.bufferedWriter().use { writer ->
+            writer.appendLine("@file:Suppress(\"unused\", \"NOTHING_TO_INLINE\")")
             writer.appendLine()
-            writer.appendLine("package $outputPackage")
+            writer.appendLine("package ${configuration.outputPackage}")
             writer.appendLine()
             writer.appendLine("// Auto-generated by kexport — do not edit manually.")
 
@@ -181,8 +176,6 @@ class ExportProcessor(
                 }
             }
         }
-
-        logger.info("Generated $outputPackage.$OUTPUT_FILE with ${exports.size} export(s).")
     }
 
     /**
@@ -216,6 +209,10 @@ class ExportProcessor(
                 append(" = ${entry.qualifiedName}($paramPassThrough)")
             }
         }
+    }
+
+    private fun KSDeclaration.hasExportAnnotation(): Boolean = this.annotations.any {
+        it.annotationType.resolve().declaration.qualifiedName?.asString() == ANNOTATION_NAME
     }
 
     private fun KSDeclaration.determineExportName(): String = this.annotations
