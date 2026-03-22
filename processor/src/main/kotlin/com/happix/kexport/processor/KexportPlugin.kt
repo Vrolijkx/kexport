@@ -5,6 +5,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 
 class KexportPlugin : Plugin<Project> {
+
     override fun apply(project: Project) {
         if (!project.plugins.hasPlugin("com.google.devtools.ksp")) {
             project.plugins.apply("com.google.devtools.ksp")
@@ -14,6 +15,12 @@ class KexportPlugin : Plugin<Project> {
 
         project.dependencies.add("compileOnly", "com.happix.kexport:annotation:1.0.0")
         project.dependencies.add("ksp", "com.happix.kexport:processor:1.0.0")
+
+        project.tasks.register("kexport") { task ->
+            task.group = "kexport"
+            task.description = "Run kexport code generation. Just an alias for invoking kspKotlin."
+            task.dependsOn("kspKotlin")
+        }
 
         project.afterEvaluate {
             val exportConfig = KexportConfiguration.fromGradleExtension(extension)
@@ -30,4 +37,5 @@ class KexportPlugin : Plugin<Project> {
             this.arg(key, value)
         }
     }
+
 }
