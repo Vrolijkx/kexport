@@ -15,6 +15,12 @@ class KexportPlugin : Plugin<Project> {
         project.dependencies.add("compileOnly", "com.happix.kexport:annotation:1.0.0")
         project.dependencies.add("ksp", "com.happix.kexport:processor:1.0.0")
 
+        project.tasks.register("kexport") { task ->
+            task.group = "kexport"
+            task.description = "Run kexport code generation"
+            task.dependsOn("kspKotlin")
+        }
+
         project.afterEvaluate {
             val exportConfig = KexportConfiguration.fromGradleExtension(extension)
 

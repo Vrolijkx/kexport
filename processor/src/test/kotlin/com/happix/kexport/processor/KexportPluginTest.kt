@@ -149,6 +149,26 @@ class KexportPluginTest {
     }
 
     @Test
+    fun `kexport task is registered and visible`() {
+        buildFile.writeText(
+            """
+            plugins {
+                kotlin("jvm")
+                id("com.happix.kexport")
+            }
+
+            kexport {
+                packageToScan = "com.example"
+            }
+            """.trimIndent(),
+        )
+
+        val result = runBuild("tasks", "--group=kexport")
+        result.output shouldContain "kexport"
+        result.output shouldContain "Run kexport code generation"
+    }
+
+    @Test
     fun `missing packageToScan fails build`() {
         buildFile.writeText(
             """
