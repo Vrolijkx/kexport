@@ -26,6 +26,7 @@ dependencies {
 
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.kotest.assertions.core)
+    testImplementation(libs.kotlinx.coroutines.core)
     testImplementation(libs.kctfork.core)
     testImplementation(libs.kctfork.ksp)
     testRuntimeOnly(libs.junit.platform.launcher)
@@ -33,6 +34,13 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+    val annotationJarTask = project(":annotation").tasks.named<Jar>("jar")
+    val processorJarTask = tasks.named<Jar>("jar")
+    dependsOn(annotationJarTask, processorJarTask)
+    doFirst {
+        systemProperty("kexport.annotationJar", annotationJarTask.get().archiveFile.get().asFile.absolutePath)
+        systemProperty("kexport.processorJar", processorJarTask.get().archiveFile.get().asFile.absolutePath)
+    }
 }
 
 tasks.named<PluginUnderTestMetadata>("pluginUnderTestMetadata") {

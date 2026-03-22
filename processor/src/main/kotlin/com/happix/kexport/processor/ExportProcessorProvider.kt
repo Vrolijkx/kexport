@@ -8,6 +8,6 @@ class ExportProcessorProvider : SymbolProcessorProvider {
     override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor = ExportProcessor(
         codeGenerator = environment.codeGenerator,
         logger = environment.logger,
-        configuration = ExportConfiguration.from(environment.options),
+        configuration = KexportConfiguration.fromKspArguments(environment.options),
     )
 }

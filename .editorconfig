@@ -10,3 +10,4 @@ trim_trailing_whitespace = true
 
 [*.{kt,kts}]
 ktlint_code_style = intellij_idea
+ij_kotlin_packages_to_use_import_on_demand = com.google.devtools.ksp.processing,com.google.devtools.ksp.symbol

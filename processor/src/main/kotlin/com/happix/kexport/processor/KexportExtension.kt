@@ -8,4 +8,7 @@ abstract class KexportExtension {
 
     /** The package for the generated Exports.kt file. Defaults to [packageToScan].dsl */
     abstract val outputPackage: Property<String>
+
+    /** The name of the generated file. Defaults to "Dsl.kt" */
+    abstract val outputFileName: Property<String>
 }

@@ -120,7 +120,7 @@ class ExportProcessorTest {
                 class OtherClass
                 """.trimIndent(),
             ),
-            packageToScan = "com.example",
+            exportConfiguration = KexportConfiguration(packageToScan = "com.example"),
         )
         result.exitCode shouldBe KotlinCompilation.ExitCode.OK
         generated shouldBe null
@@ -138,7 +138,7 @@ class ExportProcessorTest {
                 class Inner
                 """.trimIndent(),
             ),
-            packageToScan = "com.example",
+            exportConfiguration = KexportConfiguration(packageToScan = "com.example"),
         )
         result.exitCode shouldBe KotlinCompilation.ExitCode.OK
         generated shouldContain "typealias Inner = com.example.models.Inner"
@@ -193,7 +193,10 @@ class ExportProcessorTest {
                 @Export class User
                 """.trimIndent(),
             ),
-            outputPackage = "com.example.exports",
+            exportConfiguration = KexportConfiguration(
+                packageToScan = "com.example",
+                outputPackage = "com.example.exports",
+            ),
         )
         result.exitCode shouldBe KotlinCompilation.ExitCode.OK
         generated shouldContain "package com.example.exports"
@@ -403,22 +406,22 @@ class ExportProcessorTest {
 
     private fun compile(
         vararg sources: SourceFile,
-        packageToScan: String = "com.example",
-        outputPackage: String = "com.example.dsl",
+        exportConfiguration: KexportConfiguration = KexportConfiguration(packageToScan = "com.example"),
     ): Pair<JvmCompilationResult, GeneratedCode?> {
         val compilation = KotlinCompilation().apply {
             this.sources = sources.toList()
             inheritClassPath = true
             configureKsp {
                 symbolProcessorProviders += ExportProcessorProvider()
-                processorOptions["kexport.packageToScan"] = packageToScan
-                processorOptions["kexport.outputPackage"] = outputPackage
+                exportConfiguration.toKspArguments().forEach { (key, value) ->
+                    processorOptions[key] = value
+                }
             }
         }
         val result = compilation.compile()
         val generated = compilation.kspSourcesDir
             .walkTopDown()
-            .firstOrNull { it.name == "Exports.kt" }
+            .firstOrNull { it.name == exportConfiguration.outputFileName }
             ?.readText()
         return result to generated
     }
