@@ -65,10 +65,11 @@ Consumers import from the output package and are completely decoupled from the i
 
 ## Configuration reference
 
-| Property        | Required | Default              | Description |
-|-----------------|----------|----------------------|-------------|
-| `packageToScan` | Yes      | —                    | Package prefix to scan. All sub-packages are included. |
-| `outputPackage` | No       | value of `packageToScan` | Package for the generated `Exports.kt` file. |
+| Property        | Required | Default                       | Description |
+|-----------------|----------|-------------------------------|-------------|
+| `packageToScan` | Yes      | —                             | Package prefix to scan. All sub-packages are included. |
+| `outputPackage` | No       | `{packageToScan}.dsl`         | Package for the generated file. |
+| `outputFileName`| No       | `Dsl.kt`                      | Name of the generated file. |
 
 
 ## Future plans
