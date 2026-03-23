@@ -1,10 +1,9 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
     `java-gradle-plugin`
+    id("com.gradle.plugin-publish") version "1.3.0"
+    signing
 }
-
-group = "com.happix.kexport"
-version = "1.0.0"
 
 // Separate configuration for extra jars that must be on the TestKit plugin classpath.
 // Using testRuntimeClasspath directly would create a circular dependency, because
@@ -48,10 +47,50 @@ tasks.named<PluginUnderTestMetadata>("pluginUnderTestMetadata") {
 }
 
 gradlePlugin {
+    website = "https://github.com/Vrolijkx/kexport"
+    vcsUrl = "https://github.com/Vrolijkx/kexport"
     plugins {
         create("kexport") {
             id = "com.happix.kexport"
             implementationClass = "com.happix.kexport.processor.KexportPlugin"
+            displayName = "kexport"
+            description = "Generates a clean DSL surface for your Kotlin modules using @Export annotations"
+            tags = listOf("kotlin", "ksp", "codegen", "dsl")
         }
+    }
+}
+
+publishing {
+    publications.withType<MavenPublication>().configureEach {
+        pom {
+            name.set("kexport-processor")
+            description.set("Generates a clean DSL surface for your Kotlin modules using @Export annotations")
+            url.set("https://github.com/Vrolijkx/kexport")
+            licenses {
+                license {
+                    name.set("MIT License")
+                    url.set("https://opensource.org/licenses/MIT")
+                }
+            }
+            developers {
+                developer {
+                    id.set("Vrolijkx")
+                    name.set("Vrolijkx")
+                }
+            }
+            scm {
+                url.set("https://github.com/Vrolijkx/kexport")
+                connection.set("scm:git:git://github.com/Vrolijkx/kexport.git")
+                developerConnection.set("scm:git:ssh://git@github.com/Vrolijkx/kexport.git")
+            }
+        }
+    }
+}
+
+signing {
+    val signingKey = providers.environmentVariable("GPG_SIGNING_KEY").orNull
+    val signingPassword = providers.environmentVariable("GPG_SIGNING_PASSWORD").orNull
+    if (signingKey != null) {
+        useInMemoryPgpKeys(signingKey, signingPassword)
     }
 }
