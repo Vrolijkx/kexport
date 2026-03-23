@@ -37,5 +37,4 @@ class KexportPlugin : Plugin<Project> {
             this.arg(key, value)
         }
     }
-
 }
