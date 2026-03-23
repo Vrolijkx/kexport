@@ -76,4 +76,4 @@ Consumers import from the output package and are completely decoupled from the i
 - [x] Support for `Interfaces`
 - [x] Support for `sealed` classes
 - [x] Allow to use your own KSP processor version
-- [ ] Add support for using `kapt` instead of `ksp`
+- [ ] Add support for using `kapt` next to existing `ksp` support
