@@ -1,5 +1,7 @@
 # kexport
 
+![Build](https://github.com/Vrolijkx/kexport/actions/workflows/build.yml/badge.svg)
+
 A Gradle plugin that generates a clean DSL surface for your Kotlin modules. Annotate the classes and functions you want to expose with `@Export` and kexport generates a single `Dsl.kt` file containing type aliases and delegating wrapper functions — keeping internal implementation details hidden behind a stable public API.
 
 ## How to use
