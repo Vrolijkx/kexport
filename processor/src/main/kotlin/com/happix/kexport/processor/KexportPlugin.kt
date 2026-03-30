@@ -13,6 +13,7 @@ class KexportPlugin : Plugin<Project> {
 
         val extension = project.extensions.create("kexport", KexportExtension::class.java)
 
+        //Given the @Export annotation is not published to maven central(yet), we need to resolve it from the gradle plugins repository.
         project.repositories.maven { repo ->
             repo.url = project.uri("https://plugins.gradle.org/m2/")
         }

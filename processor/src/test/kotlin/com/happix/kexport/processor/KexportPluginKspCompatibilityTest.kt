@@ -106,6 +106,7 @@ class KexportPluginKspCompatibilityTest {
                 }
             }
             dependencyResolutionManagement {
+                repositoriesMode.set(RepositoriesMode.PREFER_PROJECT)
                 repositories {
                     flatDir { dirs("libs") }
                     mavenCentral()
