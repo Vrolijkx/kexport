@@ -55,6 +55,10 @@ class KexportPluginKspCompatibilityTest {
                 id("com.google.devtools.ksp") version "${version.ksp}"
                 id("com.happix.kexport")
             }
+            repositories {
+                maven { url = uri("${projectDir.resolve("libs").absolutePath}") }
+                mavenCentral()
+            }
             kexport {
                 packageToScan = "com.example"
             }
@@ -134,12 +138,6 @@ class KexportPluginKspCompatibilityTest {
             pluginManagement {
                 repositories {
                     gradlePluginPortal()
-                    mavenCentral()
-                }
-            }
-            dependencyResolutionManagement {
-                repositories {
-                    maven { url = settingsDir.resolve("libs").toURI() }
                     mavenCentral()
                 }
             }
