@@ -55,6 +55,10 @@ class KexportPluginKspCompatibilityTest {
                 id("com.google.devtools.ksp") version "${version.ksp}"
                 id("com.happix.kexport")
             }
+            repositories {
+                maven { url = uri("${projectDir.resolve("libs").absolutePath}") }
+                mavenCentral()
+            }
             kexport {
                 packageToScan = "com.example"
             }
@@ -90,10 +94,42 @@ class KexportPluginKspCompatibilityTest {
     // by the Gradle test task) into a libs/ flat-dir repository inside the temp project.
     // This lets Gradle resolve com.happix.kexport:annotation:1.0.0 and
     // com.happix.kexport:processor:1.0.0 without requiring a published Maven artifact.
+    // Copies the locally-built annotation and processor jars (passed via system properties
+    // by the Gradle test task) into a Maven-structured local repository inside the temp project,
+    // including minimal POM files with no transitive dependencies. This prevents Gradle from
+    // fetching metadata from remote repos (e.g. Gradle Plugin Portal), which would introduce
+    // KSP API transitive dependencies that conflict with the KSP versions under test.
     private fun setupLocalRepo(projectDir: File) {
-        val libsDir = projectDir.resolve("libs").also { it.mkdirs() }
-        File(System.getProperty("kexport.annotationJar")).copyTo(libsDir.resolve("annotation-1.0.0.jar"))
-        File(System.getProperty("kexport.processorJar")).copyTo(libsDir.resolve("processor-1.0.0.jar"))
+        copyArtifact(
+            projectDir,
+            groupId = "com.happix.kexport",
+            artifactId = "annotation",
+            version = "1.0.0",
+            jar = File(System.getProperty("kexport.annotationJar")),
+        )
+        copyArtifact(
+            projectDir,
+            groupId = "com.happix.kexport",
+            artifactId = "processor",
+            version = "1.0.0",
+            jar = File(System.getProperty("kexport.processorJar")),
+        )
+    }
+
+    private fun copyArtifact(projectDir: File, groupId: String, artifactId: String, version: String, jar: File) {
+        val artifactDir = projectDir.resolve("libs/${groupId.replace('.', '/')}/$artifactId/$version").also { it.mkdirs() }
+        jar.copyTo(artifactDir.resolve("$artifactId-$version.jar"))
+        artifactDir.resolve("$artifactId-$version.pom").writeText(
+            """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <project>
+              <modelVersion>4.0.0</modelVersion>
+              <groupId>$groupId</groupId>
+              <artifactId>$artifactId</artifactId>
+              <version>$version</version>
+            </project>
+            """.trimIndent(),
+        )
     }
 
     private fun writeSettingsFile(projectDir: File) {
@@ -102,12 +138,6 @@ class KexportPluginKspCompatibilityTest {
             pluginManagement {
                 repositories {
                     gradlePluginPortal()
-                    mavenCentral()
-                }
-            }
-            dependencyResolutionManagement {
-                repositories {
-                    flatDir { dirs("libs") }
                     mavenCentral()
                 }
             }
