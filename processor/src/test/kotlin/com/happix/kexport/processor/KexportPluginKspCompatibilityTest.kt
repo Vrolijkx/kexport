@@ -139,7 +139,7 @@ class KexportPluginKspCompatibilityTest {
             }
             dependencyResolutionManagement {
                 repositories {
-                    maven { url = uri("libs") }
+                    maven { url = settingsDir.resolve("libs").toURI() }
                     mavenCentral()
                 }
             }
