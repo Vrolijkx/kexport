@@ -13,6 +13,10 @@ class KexportPlugin : Plugin<Project> {
 
         val extension = project.extensions.create("kexport", KexportExtension::class.java)
 
+        project.repositories.maven { repo ->
+            repo.url = project.uri("https://plugins.gradle.org/m2/")
+        }
+
         project.dependencies.add("compileOnly", "com.happix.kexport:annotation:1.0.0")
         project.dependencies.add("ksp", "com.happix.kexport:processor:1.0.0")
 
